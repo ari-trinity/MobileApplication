@@ -4,16 +4,19 @@ import { StyleSheet, TextInput, View } from 'react-native';
 // bring in page switching
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+// bring in the database save tools
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 // bring in the button, the text block & the shared style
 import CustomButton from '../components/CustomButton';
 import ThemedText from '../components/ThemedText';
 import { RootStackParamList } from '../navigation/types';
+import { auth, db } from '../services/firebase';
 import { globalStyles } from '../styles/globalStyles';
 
 // the kind of page switcher this screen uses
 type ManageNavigation = NativeStackNavigationProp<RootStackParamList, 'Manage'>;
 
-// this page lets a person update a name
+// this page saves a name in firestore
 export default function ManageScreen() {
   // get the tool that opens other pages
   const navigation = useNavigation<ManageNavigation>();
@@ -22,14 +25,37 @@ export default function ManageScreen() {
   // remember the title shown at the top of the page
   const [message, setMessage] = useState('Manage your profile');
 
-  // save the name or ask for one
-  function handleSave() {
+  // save the name in the users collection
+  async function handleSave() {
     if (!name) {
       setMessage('Please type a name');
       return;
     }
 
-    setMessage(`Profile saved for ${name}`);
+    // the signed-in person from firebase
+    const user = auth.currentUser;
+
+    if (!user) {
+      setMessage('Log in before saving');
+      return;
+    }
+
+    try {
+      setMessage('Saving...');
+      // store the name & email under this person's id
+      await setDoc(
+        doc(db, 'users', user.uid),
+        {
+          name: name.trim(), // the typed name
+          email: user.email ?? '', // the account email
+          updatedAt: serverTimestamp(), // the save time
+        },
+        { merge: true }, // keep older fields when updating
+      );
+      setMessage(`Profile saved for ${name.trim()}`);
+    } catch {
+      setMessage('Could not save the profile');
+    }
   }
 
   return (
@@ -44,7 +70,7 @@ export default function ManageScreen() {
         value={name}
         onChangeText={setName}
       />
-      {/* button that saves the name */}
+      {/* button that saves the name online */}
       <CustomButton title="Save profile" onPress={handleSave} />
       {/* button that goes back home */}
       <CustomButton title="Back to home" onPress={() => navigation.navigate('Home')} />
