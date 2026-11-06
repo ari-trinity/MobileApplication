@@ -1,18 +1,22 @@
 // bring in the status bar & the page holder
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
-// show the manage page for this check
-import ManageScreen from './screens/ManageScreen';
+// bring in the shared login box & the explore page
+import { AuthProvider } from './context/AuthContext';
+import ExploreScreen from './screens/ExploreScreen';
 
-// the app opens the manage page for now
+// the app opens the explore page for this check
 export default function App() {
   return (
-    // stretch the page to fill the screen
-    <View style={{ flex: 1 }}>
-      {/* place the manage page here */}
-      <ManageScreen />
-      {/* show the phone status bar */}
-      <StatusBar style="auto" />
-    </View>
+    // keep the shared login box turned on
+    <AuthProvider>
+      {/* stretch the page to fill the screen */}
+      <View style={{ flex: 1 }}>
+        {/* place the explore page here */}
+        <ExploreScreen />
+        {/* show the phone status bar */}
+        <StatusBar style="auto" />
+      </View>
+    </AuthProvider>
   );
 }
