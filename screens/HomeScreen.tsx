@@ -1,17 +1,21 @@
-// bring in memory & the page holder
-import { useState } from 'react';
+// bring in the page holder
 import { View } from 'react-native';
 // bring in page switching
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 // bring in firebase log out
 import { signOut } from 'firebase/auth';
+// bring in the redux hooks
+import { useDispatch, useSelector } from 'react-redux';
 // bring in the button, the text block, the shared style & the login box
 import CustomButton from '../components/CustomButton';
 import ThemedText from '../components/ThemedText';
 import { useAuth } from '../context/AuthContext';
 import { RootStackParamList } from '../navigation/types';
+import { runLongTask } from '../services/apiService';
 import { auth } from '../services/firebase';
+import { RootState } from '../store/store';
+import { setMessage, setProgress } from '../store/taskSlice';
 import { globalStyles } from '../styles/globalStyles';
 
 // the kind of page switcher this screen uses
@@ -23,8 +27,11 @@ export default function HomeScreen() {
   const { email, logOut } = useAuth();
   // get the tool that opens other pages
   const navigation = useNavigation<HomeNavigation>();
-  // remember the sentence shown on the page
-  const [message, setMessage] = useState('This is the home screen.');
+  // get the tool that writes in the redux notebook
+  const dispatch = useDispatch();
+  // read the sentence & progress from the notebook
+  const message = useSelector((state: RootState) => state.task.message);
+  const progress = useSelector((state: RootState) => state.task.progress);
 
   // sign out of firebase, clear the shared box & return to login
   async function handleLogOut() {
@@ -36,18 +43,33 @@ export default function HomeScreen() {
     });
   }
 
+  // run the slow task & write each percent in the notebook
+  async function handleLongTask() {
+    dispatch(setProgress('Progress: starting'));
+    const result = await runLongTask((percent) => {
+      dispatch(setProgress(`Progress: ${percent}%`));
+    });
+    dispatch(setMessage(result));
+  }
+
   return (
     // use the shared light page style
     <View style={globalStyles.screen}>
-      {/* show the current sentence */}
+      {/* show the sentence from the notebook */}
       <ThemedText>{message}</ThemedText>
       {/* show who is logged in */}
-      <ThemedText style={{ marginTop: 12 }}>{email ? `Logged in as ${email}` : 'Not logged in'}</ThemedText>
-      {/* button that changes the sentence */}
+      <ThemedText style={{ marginTop: 12 }}>
+        {email ? `Logged in as ${email}` : 'Not logged in'}
+      </ThemedText>
+      {/* show the progress from the notebook */}
+      <ThemedText style={{ marginTop: 12 }}>{progress}</ThemedText>
+      {/* button that changes the sentence in the notebook */}
       <CustomButton
         title="Press me"
-        onPress={() => setMessage('You pressed the button!')}
+        onPress={() => dispatch(setMessage('You pressed the button!'))}
       />
+      {/* button that starts the slow task */}
+      <CustomButton title="Start long task" onPress={handleLongTask} />
       {/* button that opens the explore page */}
       <CustomButton title="Explore" onPress={() => navigation.navigate('Explore')} />
       {/* button that opens the manage page */}

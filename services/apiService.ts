@@ -14,3 +14,18 @@ export async function fetchSampleUpdate() {
   // return the title text from the answer
   return response.data.title as string;
 }
+
+// pretend to run the /long-task job & report each step
+export async function runLongTask(onProgress: (percent: number) => void) {
+  // the progress marks to show
+  const steps = [0, 25, 50, 75, 100];
+
+  // wait a moment at each mark
+  for (const step of steps) {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    onProgress(step);
+  }
+
+  // tell the page that the job is finished
+  return 'Task finished';
+}
