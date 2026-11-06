@@ -1,13 +1,22 @@
 // bring in memory, a text box & the page layout
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+// bring in page switching
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 // bring in the button, the text block & the shared style
 import CustomButton from '../components/CustomButton';
 import ThemedText from '../components/ThemedText';
+import { RootStackParamList } from '../navigation/types';
 import { globalStyles } from '../styles/globalStyles';
+
+// the kind of page switcher this screen uses
+type ManageNavigation = NativeStackNavigationProp<RootStackParamList, 'Manage'>;
 
 // this page lets a person update a name
 export default function ManageScreen() {
+  // get the tool that opens other pages
+  const navigation = useNavigation<ManageNavigation>();
   // remember the name while the person types
   const [name, setName] = useState('');
   // remember the title shown at the top of the page
@@ -37,6 +46,8 @@ export default function ManageScreen() {
       />
       {/* button that saves the name */}
       <CustomButton title="Save profile" onPress={handleSave} />
+      {/* button that goes back home */}
+      <CustomButton title="Back to home" onPress={() => navigation.navigate('Home')} />
     </View>
   );
 }
